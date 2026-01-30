@@ -1,0 +1,14 @@
+### Health Check
+GET http://localhost:3000/health
+
+###
+
+### Echo Message
+POST http://localhost:3000/echo
+Content-Type: application/json
+
+{
+  "message": "Hello"
+}
+
+###

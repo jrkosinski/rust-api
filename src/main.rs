@@ -1,11 +1,19 @@
 use axum::{
     routing::{get, post},
-    http::StatusCode,
-    Json, Router,
+    Router,
 };
-use serde::{Deserialize, Serialize};
+
+use std::sync::Arc;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
+mod controllers;
+mod services;
+
+use controllers::health_controller::HealthController;
+use controllers::echo_controller::EchoController;
+
+use crate::controllers::echo_controller;
 
 /// Main entry point for the rusty-resty REST API server.
 /// Initializes logging, sets up routes, and starts the HTTP server.
@@ -30,10 +38,24 @@ fn initialize_tracing() {
 
 /// Builds the application router with all routes and middleware
 fn build_router() -> Router {
+    // Initialize controllers with their dependencies
+    let health_controller = Arc::new(HealthController::new());
+    let echo_controller = Arc::new(EchoController::new());
+
+    // Create nested routers with individual states
+    let health_router = Router::new()
+        .route("/health", get(HealthController::health_check))
+        .with_state(health_controller);
+
+    let echo_router = Router::new()
+        .route("/echo", post(EchoController::echo))
+        .with_state(echo_controller);
+
+    // Merge all routers together
     Router::new()
         .route("/", get(root))
-        .route("/health", get(health_check))
-        .route("/api/echo", post(echo))
+        .merge(health_router)
+        .merge(echo_router)
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::permissive())
 }
@@ -56,44 +78,4 @@ async fn run_server(listener: tokio::net::TcpListener, app: Router) {
 /// Root endpoint handler that returns a welcome message.
 async fn root() -> &'static str {
     "Welcome to rusty-resty!"
-}
-
-/// Health check endpoint that returns the service status.
-/// Returns a 200 OK status with a JSON response indicating the service is healthy.
-async fn health_check() -> (StatusCode, Json<HealthResponse>) {
-    (
-        StatusCode::OK,
-        Json(HealthResponse {
-            status: "healthy".to_string(),
-        }),
-    )
-}
-
-/// Echo endpoint that returns the same message that was sent.
-/// Accepts a JSON payload and echoes it back to the caller.
-async fn echo(Json(payload): Json<EchoRequest>) -> (StatusCode, Json<EchoResponse>) {
-    (
-        StatusCode::OK,
-        Json(EchoResponse {
-            message: payload.message,
-        }),
-    )
-}
-
-/// Response type for the health check endpoint.
-#[derive(Debug, Serialize, Deserialize)]
-struct HealthResponse {
-    status: String,
-}
-
-/// Request type for the echo endpoint.
-#[derive(Debug, Serialize, Deserialize)]
-struct EchoRequest {
-    message: String,
-}
-
-/// Response type for the echo endpoint.
-#[derive(Debug, Serialize, Deserialize)]
-struct EchoResponse {
-    message: String,
 }
