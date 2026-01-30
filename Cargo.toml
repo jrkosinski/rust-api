@@ -2,7 +2,7 @@
 name = "rusty-resty"
 version = "0.1.0"
 edition = "2021"
-authors = ["Your Name <your.email@example.com>"]
+authors = []
 description = "A REST API server built with Rust and Axum"
 readme = "README.md"
 homepage = "https://github.com/yourusername/rusty-resty"
