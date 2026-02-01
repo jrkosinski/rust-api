@@ -1,5 +1,4 @@
-use serde::{Deserialize, Serialize};
-use rustapi_core::Injectable;
+use rustapi::prelude::*;
 
 /// Response type for the health check endpoint.
 #[derive(Debug, Serialize, Deserialize)]

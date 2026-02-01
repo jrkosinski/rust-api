@@ -1,13 +1,4 @@
-use rustapi_core::{
-    Container,
-    RustAPI,
-    Router,
-    router,
-    routing::{get, post},
-    CorsLayer,
-    TraceLayer,
-};
-use rustapi_macros::get as get_macro;
+use rustapi::prelude::*;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod controllers;
@@ -20,7 +11,7 @@ use services::echo_service::EchoService;
 use services::health_service::HealthService;
 
 /// Root endpoint handler that returns a welcome message.
-#[get_macro("/")]
+#[get("/")]
 async fn root() -> &'static str {
     "Welcome to RustAPI!"
 }
@@ -74,18 +65,18 @@ fn build_router(container: &Container) -> Router {
     // Note: Routes are added before calling with_state() - this is Axum's pattern
     // Path comes from the #[get("/health")] macro!
     let health_router = Router::new()
-        .route(__health_check_route, get(health_check))
+        .route(__health_check_route, routing::get(health_check))
         .with_state(health_service);
 
     // Path comes from the #[post("/echo")] macro!
     let echo_router = Router::new()
-        .route(__echo_route, post(echo))
+        .route(__echo_route, routing::post(echo))
         .with_state(echo_service);
 
     // Merge all routers together
     // Using router::build() as recommended entry point, but Router::new() also works
     router::build()
-        .route(__root_route, get(root))
+        .route(__root_route, routing::get(root))
         .merge(health_router)
         .merge(echo_router)
         .layer(TraceLayer::new_for_http())

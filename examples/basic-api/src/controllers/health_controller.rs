@@ -1,5 +1,4 @@
-use axum::{extract::State, Json};
-use rustapi_macros::get;
+use rustapi::prelude::*;
 use std::sync::Arc;
 use crate::services::health_service::{HealthService, HealthResponse};
 

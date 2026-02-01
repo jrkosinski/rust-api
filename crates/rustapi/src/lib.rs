@@ -23,38 +23,47 @@
 //! #[tokio::main]
 //! async fn main() {
 //!     let app = Router::new()
-//!         .route(__get_user_route.0, __get_user_route.1());
+//!         .route(__get_user_route, routing::get(get_user));
 //!
-//!     axum::serve(listener, app).await.unwrap();
+//!     RustAPI::new(app)
+//!         .port(3000)
+//!         .serve()
+//!         .await
+//!         .unwrap();
 //! }
 //! ```
-//!
-//! # Architecture
-//!
-//! The framework is organized into several crates:
-//!
-//! - `rustapi-core`: DI container and app builder
-//! - `rustapi-macros`: Procedural macros for routes
-//! - `rustapi` (this crate): Facade that re-exports everything
 //!
 //! # Examples
 //!
 //! See the `examples/` directory for complete working examples:
 //!
-//! - `with_macros.rs`: Route macro usage
-//! - More coming soon!
+//! - `basic-api`: Complete example with controllers, services, and DI
 
-//re-export core functionality
-pub use rustapi_core::{
-    Container,
-    Injectable,
-    App,
-    Error as CoreError,
-    Result as CoreResult,
-    RouterExt,
-};
+// Core modules
+pub mod di;
+pub mod app;
+pub mod error;
+pub mod server;
+pub mod router;
 
-//re-export macros
+// Re-export core types
+pub use di::{Container, Injectable};
+pub use app::App;
+pub use error::{Error, Result};
+pub use server::RustAPI;
+pub use router::{Router, RouterExt};
+
+// Re-export routing methods from Axum
+// These are used to define route handlers (get, post, put, delete, etc.)
+pub mod routing {
+    pub use axum::routing::*;
+}
+
+// Re-export common middleware layers
+pub use tower_http::cors::CorsLayer;
+pub use tower_http::trace::TraceLayer;
+
+// Re-export macros
 pub use rustapi_macros::{
     get,
     post,
@@ -63,10 +72,7 @@ pub use rustapi_macros::{
     patch,
 };
 
-//re-export router module and utilities
-pub use rustapi_core::router;
-
-//re-export commonly used axum types
+// Re-export commonly used axum types
 pub use axum::{
     Json,
     extract::{Path, Query, State},
@@ -74,7 +80,7 @@ pub use axum::{
     response::{IntoResponse, Response},
 };
 
-//re-export serde for user convenience
+// Re-export serde for user convenience
 pub use serde::{Serialize, Deserialize};
 
 /// Prelude module for convenient imports
@@ -85,25 +91,26 @@ pub use serde::{Serialize, Deserialize};
 /// ```
 pub mod prelude {
     pub use super::{
-        //core
+        // Core
         Container,
         Injectable,
         App,
-        CoreError,
-        CoreResult,
+        Error,
+        Result,
+        Router,
         RouterExt,
+        RustAPI,
+        router,
+        routing,
 
-        //macros
+        // Macros
         get,
         post,
         put,
         delete,
         patch,
 
-        //router utilities
-        router,
-
-        //axum
+        // Axum
         Json,
         Path,
         Query,
@@ -112,11 +119,15 @@ pub mod prelude {
         IntoResponse,
         Response,
 
-        //serde
+        // Middleware
+        CorsLayer,
+        TraceLayer,
+
+        // Serde
         Serialize,
         Deserialize,
     };
 
-    //also re-export tokio for async runtime
+    // Also re-export tokio for async runtime
     pub use tokio;
 }
