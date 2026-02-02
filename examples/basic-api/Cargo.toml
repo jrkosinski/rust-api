@@ -5,7 +5,7 @@ edition = "2021"
 publish = false
 
 [dependencies]
-rust-api = { path = "../../crates/rustapi" }
+rust-api = { path = "../../crates/rust-api" }
 tokio = { version = "1", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
 tracing = "0.1"

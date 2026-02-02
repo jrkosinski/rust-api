@@ -39,7 +39,7 @@
 
 ## Key Components
 
-### 1. Route Macros (`rustapi-macros`)
+### 1. Route Macros (`rust-api-macros`)
 
 Procedural macros for route definitions:
 
@@ -60,7 +60,7 @@ async fn get_user(
 - Parameter validation
 - Dependency injection setup
 
-### 2. Dependency Injection (`rustapi::di`)
+### 2. Dependency Injection (`rust-api::di`)
 
 Simple, type-safe DI container:
 
@@ -84,7 +84,7 @@ impl UserService {
 - Trait-based services for testing
 - Automatic Arc wrapping
 
-### 3. Validation (`rustapi-validate`) [Planned]
+### 3. Validation (`rust-api-validate`) [Planned]
 
 Derive-based validation with great errors:
 
@@ -108,7 +108,7 @@ struct CreateUser {
 - HTTP 422 with field-level errors
 - Automatic OpenAPI validation schema
 
-### 4. OpenAPI Generation (`rustapi-openapi`) [Planned]
+### 4. OpenAPI Generation (`rust-api-openapi`) [Planned]
 
 Automatic OpenAPI 3.0 spec generation:
 
@@ -127,7 +127,7 @@ let app = App::new()
 - ReDoc support
 - Type-safe schemas from Rust types
 
-### 5. Application Builder (`rustapi::app`)
+### 5. Application Builder (`rust-api::app`)
 
 Ergonomic app construction:
 
@@ -150,11 +150,12 @@ async fn main() {
 ## Project Structure
 
 ### Current Structure
+
 ```
-rustapi/
+rust-api/
 ├── crates/
-│   ├── rustapi/           # Main crate (DI, app, server, router, error)
-│   └── rustapi-macros/    # Proc macros (#[get], #[post], etc.)
+│   ├── rust-api/           # Main crate (DI, app, server, router, error)
+│   └── rust-api-macros/    # Proc macros (#[get], #[post], etc.)
 ├── examples/
 │   ├── hello_world.rs     # Minimal example
 │   ├── with_macros.rs     # Full-featured example
@@ -163,14 +164,15 @@ rustapi/
 ```
 
 ### Future Structure (Post v1.0)
+
 ```
-rustapi/
+rust-apii/
 ├── crates/
-│   ├── rustapi/           # Main facade crate
-│   ├── rustapi-core/      # Core runtime (DI, app builder)
-│   ├── rustapi-macros/    # Proc macros
-│   ├── rustapi-validate/  # Validation system (planned)
-│   └── rustapi-openapi/   # OpenAPI generation (planned)
+│   ├── rust-api/           # Main facade crate
+│   ├── rust-api-core/      # Core runtime (DI, app builder)
+│   ├── rust-api-macros/    # Proc macros
+│   ├── rust-api-validate/  # Validation system (planned)
+│   └── rust-api-openapi/   # OpenAPI generation (planned)
 ├── examples/
 │   ├── hello-world/
 │   ├── todo-app/
@@ -235,14 +237,14 @@ rustapi/
 
 ## Comparison to Existing Solutions
 
-| Feature         | rustapi | axum   | actix-web | poem | rocket |
-| --------------- | ------- | ------ | --------- | ---- | ------ |
-| Route Macros    | ✅      | ❌     | ❌        | ❌   | ✅     |
-| Built-in DI     | ✅      | ❌     | ✅        | ❌   | ❌     |
-| Auto OpenAPI    | Planned | ❌     | ❌        | ✅   | ❌     |
-| Validation      | Planned | Manual | Manual    | ✅   | ✅     |
-| FastAPI-like DX | ✅      | ❌     | ❌        | ~    | ~      |
-| Maturity        | 🚧      | ✅     | ✅        | ~    | ✅     |
+| Feature         | rust-api | axum   | actix-web | poem | rocket |
+| --------------- | -------- | ------ | --------- | ---- | ------ |
+| Route Macros    | ✅       | ❌     | ❌        | ❌   | ✅     |
+| Built-in DI     | ✅       | ❌     | ✅        | ❌   | ❌     |
+| Auto OpenAPI    | Planned  | ❌     | ❌        | ✅   | ❌     |
+| Validation      | Planned  | Manual | Manual    | ✅   | ✅     |
+| FastAPI-like DX | ✅       | ❌     | ❌        | ~    | ~      |
+| Maturity        | 🚧       | ✅     | ✅        | ~    | ✅     |
 
 ## Next Steps
 
@@ -251,6 +253,6 @@ rustapi/
 3. ✅ ~~Build minimal working example~~
 4. ✅ ~~Validate architecture with real use case~~
 5. Improve route registration ergonomics (Inject<T> extractor)
-6. Add validation system (rustapi-validate crate)
-7. Implement OpenAPI generation (rustapi-openapi crate)
+6. Add validation system (rust-api-validate crate)
+7. Implement OpenAPI generation (rust-api-openapi crate)
 8. Iterate based on community feedback

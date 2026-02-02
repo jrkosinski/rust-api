@@ -13,7 +13,7 @@
 //! # Quick Start
 //!
 //! ```ignore
-//! use rustapi::prelude::*;
+//! use rust_api::prelude::*;
 //!
 //! #[get("/users/{id}")]
 //! async fn get_user(Path(id): Path<String>) -> Json<User> {
@@ -64,7 +64,7 @@ pub use tower_http::cors::CorsLayer;
 pub use tower_http::trace::TraceLayer;
 
 // Re-export macros
-pub use rustapi_macros::{
+pub use rust_api_macros::{
     get,
     post,
     put,
@@ -87,7 +87,7 @@ pub use serde::{Serialize, Deserialize};
 ///
 /// Import everything you need with:
 /// ```ignore
-/// use rustapi::prelude::*;
+/// use rust_api::prelude::*;
 /// ```
 pub mod prelude {
     pub use super::{

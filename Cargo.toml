@@ -1,7 +1,7 @@
 [workspace]
 members = [
-    "crates/rustapi",
-    "crates/rustapi-macros",
+    "crates/rust-api",
+    "crates/rust-api-macros",
     "examples/basic-api",
 ]
 resolver = "2"

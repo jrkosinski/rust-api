@@ -20,7 +20,7 @@ pub type Router<S = ()> = axum::Router<S>;
 /// # Example
 ///
 /// ```ignore
-/// use rustapi_core::{router, routing};
+/// use rust_api_core::{router, routing};
 ///
 /// let app = router::build()
 ///     .route("/health", routing::get(health_check))

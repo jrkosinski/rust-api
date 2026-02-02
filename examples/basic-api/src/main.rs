@@ -1,4 +1,4 @@
-use rustapi::prelude::*;
+use rust_api::prelude::*;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod controllers;
@@ -16,7 +16,7 @@ async fn root() -> &'static str {
     "Welcome to RustAPI!"
 }
 
-/// Main entry point for the rustapi REST API server.
+/// Main entry point for the rust_api REST API server.
 /// Demonstrates FastAPI-style routing with decorator macros and dependency injection.
 #[tokio::main]
 async fn main() {
@@ -37,7 +37,7 @@ fn initialize_tracing() {
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "rustapi=debug,tower_http=debug".into()),
+                .unwrap_or_else(|_| "rust_api=debug,tower_http=debug".into()),
         )
         .with(tracing_subscriber::fmt::layer())
         .init();

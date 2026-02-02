@@ -1,11 +1,11 @@
-//! Error types for rustapi framework
+//! Error types for rust-api framework
 
 use thiserror::Error;
 
-/// Result type alias for rustapi operations
+/// Result type alias for rust-api operations
 pub type Result<T> = std::result::Result<T, Error>;
 
-/// Main error type for the rustapi framework
+/// Main error type for the rust-api framework
 #[derive(Error, Debug)]
 pub enum Error {
     /// Service not found in the DI container

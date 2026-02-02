@@ -74,7 +74,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_rustapi_defaults() {
+    fn test_rust_api_defaults() {
         let router = crate::router::new();
         let server = RustAPI::new(router);
         assert_eq!(server.port, 3000);
@@ -82,7 +82,7 @@ mod tests {
     }
 
     #[test]
-    fn test_rustapi_builder() {
+    fn test_rust_api_builder() {
         let router = crate::router::new();
         let server = RustAPI::new(router)
             .port(8080)

@@ -1,4 +1,4 @@
-//! Procedural macros for rustapi framework
+//! Procedural macros for rust-api framework
 //!
 //! Provides route macros like #[get], #[post], etc. for defining HTTP endpoints
 //! in a FastAPI-style syntax.

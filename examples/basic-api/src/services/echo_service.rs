@@ -1,4 +1,4 @@
-use rustapi::prelude::*;
+use rust_api::prelude::*;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 /// Response type for the echo endpoint.

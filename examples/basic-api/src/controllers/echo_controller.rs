@@ -1,4 +1,4 @@
-use rustapi::prelude::*;
+use rust_api::prelude::*;
 use std::sync::Arc;
 use crate::services::echo_service::{EchoService, EchoResponse};
 

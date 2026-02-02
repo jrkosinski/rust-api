@@ -1,4 +1,4 @@
-//! Application builder for rustapi framework
+//! Application builder for rust-api framework
 //!
 //! Provides an ergonomic API for constructing and configuring REST applications.
 
@@ -7,7 +7,7 @@ use crate::error::Result;
 use axum::Router;
 use std::net::SocketAddr;
 
-/// Application builder for rustapi framework
+/// Application builder for rust-api framework
 ///
 /// Provides a fluent API for:
 /// - Registering services in the DI container

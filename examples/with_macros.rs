@@ -8,7 +8,7 @@ use axum::{
     Json,
     Router,
 };
-use rustapi_macros::{get, post};
+use rust_api_macros::{get, post};
 use serde::{Deserialize, Serialize};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -37,7 +37,7 @@ struct User {
 
 #[get("/")]
 async fn root() -> &'static str {
-    "Welcome to rustapi with macros!"
+    "Welcome to rust_api with macros!"
 }
 
 #[get("/health")]

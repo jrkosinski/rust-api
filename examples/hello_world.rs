@@ -1,12 +1,12 @@
-//! Minimal "Hello World" example using rustapi
+//! Minimal "Hello World" example using rust-api
 //!
 //! This demonstrates the simplest possible usage of the framework.
 
-use rustapi::prelude::*;
+use rust_api::prelude::*;
 
 #[get("/")]
 async fn hello() -> &'static str {
-    "Hello, rustapi!"
+    "Hello, rust_api!"
 }
 
 #[get("/greet/{name}")]

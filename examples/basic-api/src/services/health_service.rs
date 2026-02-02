@@ -1,4 +1,4 @@
-use rustapi::prelude::*;
+use rust_api::prelude::*;
 
 /// Response type for the health check endpoint.
 #[derive(Debug, Serialize, Deserialize)]

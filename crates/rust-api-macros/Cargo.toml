@@ -6,8 +6,8 @@ authors.workspace = true
 license.workspace = true
 description = "Procedural macros for rust-api framework"
 readme = "../../README.md"
-homepage = "https://github.com/jrkosinski/rustapi"
-repository = "https://github.com/jrkosinski/rustapi"
+homepage = "https://github.com/jrkosinski/rust-api"
+repository = "https://github.com/jrkosinski/rust-api"
 keywords = ["api", "rest", "web", "macros"]
 categories = ["web-programming::http-server"]
 

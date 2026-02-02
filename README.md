@@ -17,7 +17,7 @@ RustAPI brings the developer experience of FastAPI and NestJS to Rust, combining
 ## Quick Start
 
 ```rust
-use rustapi::prelude::*;
+use rust-api::prelude::*;
 
 #[derive(Serialize, Deserialize)]
 struct User {
@@ -27,7 +27,7 @@ struct User {
 
 #[get("/")]
 async fn hello() -> &'static str {
-    "Hello, rustapi!"
+    "Hello, rust-api!"
 }
 
 #[get("/users/{id}")]
@@ -94,10 +94,10 @@ curl http://localhost:3000/users/42
 ## Architecture
 
 ```
-rustapi/
+rust-api/
 ├── crates/
-│   ├── rustapi/           # Main crate (DI, app builder, server, router)
-│   └── rustapi-macros/    # Route macros (#[get], etc.)
+│   ├── rust-api/           # Main crate (DI, app builder, server, router)
+│   └── rust-api-macros/    # Route macros (#[get], etc.)
 ├── examples/
 │   ├── hello_world.rs     # Minimal example
 │   ├── with_macros.rs     # Full-featured example
@@ -107,13 +107,13 @@ rustapi/
 
 ## Comparison
 
-| Feature         | rustapi | axum | actix-web | poem | rocket |
-| --------------- | ------- | ---- | --------- | ---- | ------ |
-| Route Macros    | ✅      | ❌   | ❌        | ❌   | ✅     |
-| Built-in DI     | ✅      | ❌   | ✅        | ❌   | ❌     |
+| Feature         | rust-api    | axum | actix-web | poem | rocket |
+| --------------- | ----------- | ---- | --------- | ---- | ------ |
+| Route Macros    | ✅          | ❌   | ❌        | ❌   | ✅     |
+| Built-in DI     | ✅          | ❌   | ✅        | ❌   | ❌     |
 | Auto OpenAPI    | In Progress | ❌   | ❌        | ✅   | ❌     |
-| FastAPI-like DX | ✅      | ❌   | ❌        | ~    | ~      |
-| Performance     | High    | High | High      | High | High   |
+| FastAPI-like DX | ✅          | ❌   | ❌        | ~    | ~      |
+| Performance     | High        | High | High      | High | High   |
 
 ## Documentation
 

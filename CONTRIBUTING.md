@@ -1,6 +1,6 @@
-# Contributing to rustapi
+# Contributing to rust-api
 
-Thank you for your interest in contributing to rustapi! We welcome contributions from everyone.
+Thank you for your interest in contributing to rust-api! We welcome contributions from everyone.
 
 ## Code of Conduct
 
@@ -42,8 +42,8 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 
 ```bash
 # Clone your fork
-git clone https://github.com/yourusername/rustapi.git
-cd rustapi
+git clone https://github.com/yourusername/rust-api.git
+cd rust-api
 
 # Build the project
 cargo build
