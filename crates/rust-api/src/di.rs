@@ -1,11 +1,14 @@
 //! Dependency Injection Container
 //!
-//! A simple, type-safe DI container that stores services as Arc-wrapped trait objects.
-//! Services can be registered and retrieved by type, with automatic Arc wrapping.
+//! A simple, type-safe DI container that stores services as Arc-wrapped trait
+//! objects. Services can be registered and retrieved by type, with automatic
+//! Arc wrapping.
 
-use std::any::{Any, TypeId};
-use std::collections::HashMap;
-use std::sync::Arc;
+use std::{
+    any::{Any, TypeId},
+    collections::HashMap,
+    sync::Arc,
+};
 
 /// Trait that all injectable services must implement
 pub trait Injectable: Send + Sync + 'static {}
@@ -54,12 +57,12 @@ impl Container {
         self.insert_service(type_id, service);
     }
 
-    //get the TypeId for a given type T
+    // get the TypeId for a given type T
     fn get_type_id<T: Injectable>(&self) -> TypeId {
         TypeId::of::<T>()
     }
 
-    //insert a service into the storage map
+    // insert a service into the storage map
     fn insert_service<T: Injectable>(&mut self, type_id: TypeId, service: Arc<T>) {
         self.services.insert(type_id, service as ServiceBox);
     }
@@ -81,8 +84,8 @@ impl Container {
         self.register(service);
     }
 
-    //create a service instance from a factory function
-    fn create_service<T: Injectable, F>(& self, factory: F) -> Arc<T>
+    // create a service instance from a factory function
+    fn create_service<T: Injectable, F>(&self, factory: F) -> Arc<T>
     where
         F: FnOnce() -> T,
     {
@@ -103,14 +106,14 @@ impl Container {
         self.lookup_service(type_id)
     }
 
-    //lookup a service by TypeId and downcast it
+    // lookup a service by TypeId and downcast it
     fn lookup_service<T: Injectable>(&self, type_id: TypeId) -> Option<Arc<T>> {
         self.services
             .get(&type_id)
             .and_then(|boxed| self.downcast_service(boxed))
     }
 
-    //downcast a type-erased service to the concrete type
+    // downcast a type-erased service to the concrete type
     fn downcast_service<T: Injectable>(&self, boxed: &ServiceBox) -> Option<Arc<T>> {
         boxed.clone().downcast::<T>().ok()
     }

@@ -1,11 +1,13 @@
 //! Application builder for rust-api framework
 //!
-//! Provides an ergonomic API for constructing and configuring REST applications.
+//! Provides an ergonomic API for constructing and configuring REST
+//! applications.
 
-use crate::di::Container;
-use crate::error::Result;
-use axum::Router;
 use std::net::SocketAddr;
+
+use axum::Router;
+
+use crate::{di::Container, error::Result};
 
 /// Application builder for rust-api framework
 ///
@@ -71,14 +73,14 @@ impl App {
         Self::run_server_on(listener, router).await
     }
 
-    //create a TCP listener on the given address
+    // create a TCP listener on the given address
     async fn create_listener_at(&self, addr: SocketAddr) -> Result<tokio::net::TcpListener> {
-        tokio::net::TcpListener::bind(addr)
-            .await
-            .map_err(|e| crate::error::Error::server_error(format!("Failed to bind to {}: {}", addr, e)))
+        tokio::net::TcpListener::bind(addr).await.map_err(|e| {
+            crate::error::Error::server_error(format!("Failed to bind to {}: {}", addr, e))
+        })
     }
 
-    //run the axum server with the given listener and router
+    // run the axum server with the given listener and router
     async fn run_server_on(listener: tokio::net::TcpListener, router: Router) -> Result<()> {
         let addr = listener.local_addr().unwrap();
         tracing::info!("Server running on http://{}", addr);

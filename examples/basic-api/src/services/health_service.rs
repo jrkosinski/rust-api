@@ -7,13 +7,12 @@ pub struct HealthResponse {
 }
 
 pub struct HealthService {
-    //state here
+    // state here
 }
 
 impl Injectable for HealthService {}
 
-impl HealthService
-{
+impl HealthService {
     pub fn new() -> Self {
         Self {
             //initialize dependencies here

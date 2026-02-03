@@ -1,7 +1,8 @@
 //! RustAPI: FastAPI-inspired REST framework for Rust
 //!
 //! RustAPI brings the developer experience of FastAPI and NestJS to Rust,
-//! with automatic OpenAPI generation, built-in validation, and dependency injection.
+//! with automatic OpenAPI generation, built-in validation, and dependency
+//! injection.
 //!
 //! # Features
 //!
@@ -40,18 +41,18 @@
 //! - `basic-api`: Complete example with controllers, services, and DI
 
 // Core modules
-pub mod di;
 pub mod app;
+pub mod di;
 pub mod error;
-pub mod server;
 pub mod router;
+pub mod server;
 
 // Re-export core types
-pub use di::{Container, Injectable};
 pub use app::App;
+pub use di::{Container, Injectable};
 pub use error::{Error, Result};
-pub use server::RustAPI;
 pub use router::{Router, RouterExt};
+pub use server::RustAPI;
 
 // Re-export routing methods from Axum
 // These are used to define route handlers (get, post, put, delete, etc.)
@@ -60,28 +61,18 @@ pub mod routing {
 }
 
 // Re-export common middleware layers
-pub use tower_http::cors::CorsLayer;
-pub use tower_http::trace::TraceLayer;
-
-// Re-export macros
-pub use rust_api_macros::{
-    get,
-    post,
-    put,
-    delete,
-    patch,
-};
-
 // Re-export commonly used axum types
 pub use axum::{
-    Json,
     extract::{Path, Query, State},
     http::StatusCode,
     response::{IntoResponse, Response},
+    Json,
 };
-
+// Re-export macros
+pub use rust_api_macros::{delete, get, patch, post, put};
 // Re-export serde for user convenience
-pub use serde::{Serialize, Deserialize};
+pub use serde::{Deserialize, Serialize};
+pub use tower_http::{cors::CorsLayer, trace::TraceLayer};
 
 /// Prelude module for convenient imports
 ///
@@ -90,44 +81,43 @@ pub use serde::{Serialize, Deserialize};
 /// use rust_api::prelude::*;
 /// ```
 pub mod prelude {
+    // Also re-export tokio for async runtime
+    pub use tokio;
+
     pub use super::{
-        // Core
-        Container,
-        Injectable,
-        App,
-        Error,
-        Result,
-        Router,
-        RouterExt,
-        RustAPI,
+        delete,
+        // Macros
+        get,
+        patch,
+
+        post,
+        put,
         router,
         routing,
 
-        // Macros
-        get,
-        post,
-        put,
-        delete,
-        patch,
-
+        App,
+        // Core
+        Container,
+        // Middleware
+        CorsLayer,
+        Deserialize,
+        Error,
+        Injectable,
+        IntoResponse,
         // Axum
         Json,
         Path,
         Query,
-        State,
-        StatusCode,
-        IntoResponse,
         Response,
 
-        // Middleware
-        CorsLayer,
-        TraceLayer,
-
+        Result,
+        Router,
+        RouterExt,
+        RustAPI,
         // Serde
         Serialize,
-        Deserialize,
+        State,
+        StatusCode,
+        TraceLayer,
     };
-
-    // Also re-export tokio for async runtime
-    pub use tokio;
 }

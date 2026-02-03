@@ -1,10 +1,14 @@
 //! Route macro implementation
 //!
-//! Handles expansion of #[get], #[post], etc. macros into axum-compatible handlers.
+//! Handles expansion of #[get], #[post], etc. macros into axum-compatible
+//! handlers.
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, ItemFn, LitStr, parse::Parse, parse::ParseStream, Token};
+use syn::{
+    parse::{Parse, ParseStream},
+    parse_macro_input, ItemFn, LitStr, Token,
+};
 
 /// HTTP method for route
 #[derive(Debug, Clone, Copy)]
@@ -17,7 +21,7 @@ pub enum HttpMethod {
 }
 
 impl HttpMethod {
-    //get the axum routing function name for this method
+    // get the axum routing function name for this method
     #[allow(dead_code)]
     fn axum_method(&self) -> proc_macro2::TokenStream {
         match self {
@@ -29,7 +33,7 @@ impl HttpMethod {
         }
     }
 
-    //get the method name as a string
+    // get the method name as a string
     fn as_str(&self) -> &'static str {
         match self {
             HttpMethod::Get => "GET",
@@ -71,20 +75,17 @@ pub fn expand_route_macro(
     args: TokenStream,
     input: TokenStream,
 ) -> TokenStream {
-    //parse the route path argument
+    // parse the route path argument
     let args = parse_macro_input!(args as RouteArgs);
     let path = args.path;
 
-    //parse the function
+    // parse the function
     let func = parse_macro_input!(input as ItemFn);
     let func_name = &func.sig.ident;
     let func_vis = &func.vis;
 
-    //generate route registration helper
-    let route_helper_name = syn::Ident::new(
-        &format!("__{}_route", func_name),
-        func_name.span()
-    );
+    // generate route registration helper
+    let route_helper_name = syn::Ident::new(&format!("__{}_route", func_name), func_name.span());
 
     let expanded = quote! {
         //original handler function

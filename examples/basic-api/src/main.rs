@@ -5,10 +5,11 @@ mod controllers;
 mod services;
 
 // Import controller handlers and their macro-generated path constants
-use controllers::echo_controller::{echo, __echo_route};
-use controllers::health_controller::{health_check, __health_check_route};
-use services::echo_service::EchoService;
-use services::health_service::HealthService;
+use controllers::{
+    echo_controller::{__echo_route, echo},
+    health_controller::{__health_check_route, health_check},
+};
+use services::{echo_service::EchoService, health_service::HealthService};
 
 /// Root endpoint handler that returns a welcome message.
 #[get("/")]
@@ -17,7 +18,8 @@ async fn root() -> &'static str {
 }
 
 /// Main entry point for the rust_api REST API server.
-/// Demonstrates FastAPI-style routing with decorator macros and dependency injection.
+/// Demonstrates FastAPI-style routing with decorator macros and dependency
+/// injection.
 #[tokio::main]
 async fn main() {
     initialize_tracing();
@@ -74,7 +76,8 @@ fn build_router(container: &Container) -> Router {
         .with_state(echo_service);
 
     // Merge all routers together
-    // Using router::build() as recommended entry point, but Router::new() also works
+    // Using router::build() as recommended entry point, but Router::new() also
+    // works
     router::build()
         .route(__root_route, routing::get(root))
         .merge(health_router)
