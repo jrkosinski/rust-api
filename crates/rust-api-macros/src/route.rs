@@ -7,7 +7,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
     parse::{Parse, ParseStream},
-    parse_macro_input, ItemFn, LitStr, Token,
+    parse_macro_input, ItemFn, LitStr,
 };
 
 /// HTTP method for route
@@ -34,6 +34,7 @@ impl HttpMethod {
     }
 
     // get the method name as a string
+    #[allow(dead_code)]
     fn as_str(&self) -> &'static str {
         match self {
             HttpMethod::Get => "GET",
@@ -71,7 +72,7 @@ impl Parse for RouteArgs {
 /// const __get_user_route: &str = "/users/{id}";
 /// ```
 pub fn expand_route_macro(
-    method: HttpMethod,
+    _method: HttpMethod,
     args: TokenStream,
     input: TokenStream,
 ) -> TokenStream {

@@ -4,12 +4,10 @@
 //! in a FastAPI-style syntax.
 
 use proc_macro::TokenStream;
-use quote::quote;
-use syn::{parse_macro_input, ItemFn, LitStr};
 
 mod route;
 
-use route::{HttpMethod, RouteArgs};
+use route::{HttpMethod};
 
 /// Define a GET route handler
 ///
