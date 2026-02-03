@@ -2,7 +2,11 @@
 
 > **FastAPI-inspired REST framework for Rust**
 
+[![Crates.io](https://img.shields.io/crates/v/rust-api.svg)](https://crates.io/crates/rust-api)
+[![Documentation](https://docs.rs/rust-api/badge.svg)](https://docs.rs/rust-api)
 [![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE)
+[![Build Status](https://github.com/jrkosinski/rustapi/workflows/CI/badge.svg)](https://github.com/jrkosinski/rustapi/actions)
+[![Rust Version](https://img.shields.io/badge/rust-1.70%2B-blue.svg)](https://www.rust-lang.org)
 
 RustAPI brings the developer experience of FastAPI and NestJS to Rust, combining:
 
