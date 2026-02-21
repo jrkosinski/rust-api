@@ -66,13 +66,16 @@ impl Parse for RouteArgs {
 /// async fn get_user(Path(id): Path<String>) -> Json<User> { ... }
 /// ```
 ///
-/// Into the original function plus a route path constant:
+/// Into the original function plus a route info tuple constant:
 /// ```ignore
 /// async fn get_user(Path(id): Path<String>) -> Json<User> { ... }
-/// const __get_user_route: &str = "/users/{id}";
+/// const __get_user_route: (&'static str, &'static str) = ("/users/{id}", "GET");
 /// ```
+///
+/// The tuple encodes both path and HTTP method, making the annotation a
+/// binding contract — the verb from the annotation is the sole authority.
 pub fn expand_route_macro(
-    _method: HttpMethod,
+    method: HttpMethod,
     args: TokenStream,
     input: TokenStream,
 ) -> TokenStream {
@@ -85,16 +88,21 @@ pub fn expand_route_macro(
     let func_name = &func.sig.ident;
     let func_vis = &func.vis;
 
-    // generate route registration helper
+    // generate route registration helper name
     let route_helper_name = syn::Ident::new(&format!("__{}_route", func_name), func_name.span());
+
+    // encode the HTTP method as a string literal
+    let method_str = method.as_str();
 
     let expanded = quote! {
         //original handler function
         #func
 
-        //route path constant - stores just the path for registration
+        // Route info tuple: (path, HTTP method).
+        // The method comes from the macro annotation — this is the enforcement contract.
+        // Use with Router::api_route() or RouterPipeline::route() to register correctly.
         #[allow(non_upper_case_globals)]
-        #func_vis const #route_helper_name: &str = #path;
+        #func_vis const #route_helper_name: (&'static str, &'static str) = (#path, #method_str);
     };
 
     TokenStream::from(expanded)

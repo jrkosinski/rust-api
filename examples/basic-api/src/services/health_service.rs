@@ -6,11 +6,11 @@ pub struct HealthResponse {
     pub status: String,
 }
 
+/// Health service — immutable after construction.
+/// All methods take `&self`; no `Mutex` needed.
 pub struct HealthService {
-    // state here
+    // state fields here
 }
-
-impl Injectable for HealthService {}
 
 impl HealthService {
     pub fn new() -> Self {

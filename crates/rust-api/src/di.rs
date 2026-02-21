@@ -1,14 +1,54 @@
-//! Dependency Injection Container
+//! Dependency Injection Container (optional utility)
 //!
-//! A simple, type-safe DI container that stores services as Arc-wrapped trait
-//! objects. Services can be registered and retrieved by type, with automatic
-//! Arc wrapping.
+//! **Primary DI in RustAPI:** pass `Arc<Service>` directly to
+//! `RouterPipeline::mount::<Controller>(Arc::new(MyService::new()))`.
+//! No container is needed for the standard use case.
+//!
+//! This module provides an optional [`Container`] — a type-safe service
+//! registry useful for larger applications with dynamic or plugin-driven
+//! service graphs, where you want late-binding resolution by type.
+//!
+//! # When to Use
+//!
+//! - You have a plugin system that registers services dynamically
+//! - You want to swap implementations at runtime (e.g. test doubles via trait objects)
+//! - You have many services and prefer centralized registration over explicit wiring
+//!
+//! # When NOT to Use
+//!
+//! For most APIs: construct `Arc<MyService>` directly in `main` and pass it to
+//! `pipeline.mount()`. This is explicit, compile-time-checked, and requires no
+//! type-map machinery.
+//!
+//! # Immutability Discipline
+//!
+//! Services registered in the container are stored as `Arc<T>` and shared
+//! read-only across the application. Service types should be immutable after
+//! construction — model state changes via `Atomic*` primitives or channels,
+//! not `Mutex<T>` fields. The framework enforces this by only providing
+//! shared (`Arc`) references, never exclusive (`Arc<Mutex<T>>`) ones.
+//!
+//! # Async Initialization
+//!
+//! Use [`Container::register_async_factory`] for services that require async
+//! initialization (database connections, config loading, etc.). The async
+//! effect is contained at container-construction time; all subsequent
+//! framework operations remain synchronous.
+//!
+//! Alternatively, without a container:
+//! ```ignore
+//! let svc = Arc::new(MyService::connect("postgres://...").await?);
+//! RouterPipeline::new().mount::<MyController>(svc).build()?
+//! ```
 
 use std::{
     any::{Any, TypeId},
     collections::HashMap,
+    future::Future,
     sync::Arc,
 };
+
+use crate::error::Result;
 
 /// Trait that all injectable services must implement
 pub trait Injectable: Send + Sync + 'static {}
@@ -82,6 +122,36 @@ impl Container {
     {
         let service = self.create_service(factory);
         self.register(service);
+    }
+
+    /// Register a service from an **async** constructor function.
+    ///
+    /// Use this for services that require async initialization — database
+    /// connections, config loading from remote sources, etc. The async effect
+    /// is contained here; once registered, the service is a plain `Arc<T>`
+    /// and all subsequent framework operations remain synchronous.
+    ///
+    /// Returns `Err` if the factory future resolves to an error.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// container
+    ///     .register_async_factory(|| async {
+    ///         let db = Database::connect("postgres://localhost/mydb").await?;
+    ///         Ok(DbService::new(db))
+    ///     })
+    ///     .await?;
+    /// ```
+    pub async fn register_async_factory<T, F, Fut>(&mut self, factory: F) -> Result<()>
+    where
+        T: Injectable,
+        F: FnOnce() -> Fut,
+        Fut: Future<Output = Result<T>>,
+    {
+        let service = factory().await?;
+        self.register(Arc::new(service));
+        Ok(())
     }
 
     // create a service instance from a factory function

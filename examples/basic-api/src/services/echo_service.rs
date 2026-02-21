@@ -9,12 +9,11 @@ pub struct EchoResponse {
     pub count: u64,
 }
 
-/// Echo Service implementation
+/// Echo service — uses an atomic counter for lock-free call tracking.
+/// Immutable interface: `&self` only. State changes via AtomicU64, not Mutex.
 pub struct EchoService {
     call_count: AtomicU64,
 }
-
-impl Injectable for EchoService {}
 
 impl EchoService {
     pub fn new() -> Self {

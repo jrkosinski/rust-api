@@ -16,6 +16,10 @@ pub enum Error {
     #[error("Service registration failed: {0}")]
     RegistrationError(String),
 
+    /// Async service factory failed during container population
+    #[error("Async service initialization failed: {0}")]
+    ContainerError(String),
+
     /// HTTP server error
     #[error("HTTP server error: {0}")]
     ServerError(String),
@@ -38,6 +42,11 @@ impl Error {
     /// Create a RegistrationError
     pub fn registration_error(msg: impl Into<String>) -> Self {
         Self::RegistrationError(msg.into())
+    }
+
+    /// Create a ContainerError (async factory failure)
+    pub fn container_error(msg: impl Into<String>) -> Self {
+        Self::ContainerError(msg.into())
     }
 
     /// Create a ServerError
