@@ -4,6 +4,8 @@
 > monadic router pipeline. Controllers are now pure route descriptors. Auth is a
 > Tower layer applied to a route group. The type system enforces all of this at
 > compile time. Zero runtime overhead. Zero axum imports in user code.
+> see the following song for more information: https://www.youtube.com/watch?v=M_B9d-22fwo
+> astute readers will notice that Oblio is point free
 
 ---
 
