@@ -275,3 +275,128 @@ impl Default for RouterPipeline {
         Self::new()
     }
 }
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{controller::Controller, error::Result, router::Router};
+    use axum::{body::Body, http::Request, routing::get};
+    use tower::ServiceExt;
+
+    // -----------------------------------------------------------------------
+    // Minimal test controller — state is `()`, handler returns a static string.
+    // Manually implements `Controller` so the test module has no external deps.
+    // -----------------------------------------------------------------------
+
+    struct PingController;
+
+    impl Controller for PingController {
+        type State = ();
+        fn mount(state: Arc<Self::State>) -> impl FnOnce(Router<()>) -> Result<Router<()>> {
+            move |router| {
+                let scoped: Router<Arc<()>> =
+                    Router::new().route("/ping", get(|| async { "pong" }));
+                Ok(router.merge(scoped.with_state(state)))
+            }
+        }
+    }
+
+    fn ping_state() -> Arc<()> {
+        Arc::new(())
+    }
+
+    async fn status(app: Router<()>, uri: &str) -> u16 {
+        app.oneshot(
+            Request::builder()
+                .uri(uri)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap()
+        .status()
+        .as_u16()
+    }
+
+    // -----------------------------------------------------------------------
+    // mount_guarded
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn mount_guarded_short_circuits_on_err_guard() {
+        let result = RouterPipeline::new()
+            .mount_guarded::<PingController, _>(ping_state(), || {
+                Err(crate::error::Error::other("guard failed"))
+            })
+            .build();
+
+        assert!(result.is_err(), "build() should return Err when guard fails");
+    }
+
+    #[tokio::test]
+    async fn mount_guarded_registers_route_on_ok_guard() {
+        let app = RouterPipeline::new()
+            .mount_guarded::<PingController, _>(ping_state(), || Ok(()))
+            .build()
+            .expect("build should succeed when guard passes");
+
+        assert_eq!(status(app, "/ping").await, 200);
+    }
+
+    // -----------------------------------------------------------------------
+    // mount_if
+    // -----------------------------------------------------------------------
+
+    #[tokio::test]
+    async fn mount_if_false_route_returns_404() {
+        let app = RouterPipeline::new()
+            .mount_if::<PingController>(false, ping_state())
+            .build()
+            .expect("build should succeed even when mount_if is false");
+
+        assert_eq!(status(app, "/ping").await, 404);
+    }
+
+    #[tokio::test]
+    async fn mount_if_true_route_returns_200() {
+        let app = RouterPipeline::new()
+            .mount_if::<PingController>(true, ping_state())
+            .build()
+            .expect("build should succeed when mount_if is true");
+
+        assert_eq!(status(app, "/ping").await, 200);
+    }
+
+    // -----------------------------------------------------------------------
+    // group prefix
+    // -----------------------------------------------------------------------
+
+    #[tokio::test]
+    async fn group_prefix_is_applied_to_routes() {
+        let app = RouterPipeline::new()
+            .group("/v1", |g| g.mount::<PingController>(ping_state()))
+            .build()
+            .expect("build should succeed");
+
+        assert_eq!(status(app.clone(), "/v1/ping").await, 200, "/v1/ping should be 200");
+        assert_eq!(status(app, "/ping").await, 404, "/ping without prefix should be 404");
+    }
+
+    // -----------------------------------------------------------------------
+    // Error propagation
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn error_from_and_then_propagates_through_remaining_steps() {
+        let result = RouterPipeline::new()
+            .and_then(|_| Err(crate::error::Error::other("intentional failure")))
+            .mount::<PingController>(ping_state()) // should never run
+            .build();
+
+        assert!(result.is_err(), "error should propagate through the rest of the pipeline");
+    }
+}

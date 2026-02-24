@@ -90,44 +90,46 @@ pub fn require_bearer(
 // guard
 // ---------------------------------------------------------------------------
 
-/// Creates a middleware function that guards a route with a request predicate.
+/// Returns a `Router -> Router` transform that guards every request with a
+/// predicate.
 ///
 /// Returns `403 Forbidden` if `guard_fn(&request)` returns `false`. The
-/// predicate always receives the request before any extractors run, so it has
-/// access to headers, URI, and method.
+/// predicate runs before any extractors, so it has access to headers, URI,
+/// and method.
 ///
-/// For **authentication**, prefer [`require_bearer`] applied via `.map()` on a
-/// route group. `guard` is suited for non-auth predicates (e.g., IP allowlists,
-/// feature flags evaluated per-request, method restrictions).
+/// For **authentication**, prefer [`require_bearer`] — it handles the
+/// `Authorization: Bearer` protocol correctly. `guard` is suited for
+/// non-auth predicates (e.g., IP allowlists, feature flags, method
+/// restrictions).
+///
+/// # Usage
+///
+/// Pass directly to `.map()` on the pipeline:
 ///
 /// ```ignore
 /// use rust_api::prelude::*;
 ///
-/// // Protect a whole router with an IP allowlist:
-/// router.layer(axum::middleware::from_fn(guard(|req| is_allowed_ip(req))))
+/// RouterPipeline::new()
+///     .mount::<MyController>(svc)
+///     .map(guard(|req| is_allowed_ip(req)))
+///     .build()?
 /// ```
-pub fn guard<G>(
-    guard_fn: G,
-) -> impl Fn(
-    axum::http::Request<axum::body::Body>,
-    axum::middleware::Next,
-) -> std::pin::Pin<Box<dyn std::future::Future<Output = axum::response::Response> + Send>>
-       + Clone
-       + Send
-       + 'static
+pub fn guard<G>(guard_fn: G) -> impl Fn(Router<()>) -> Router<()> + Clone + Send + 'static
 where
-    G: Fn(&axum::http::Request<axum::body::Body>) -> bool + Clone + Send + Sync + 'static,
+    G: Fn(&Request<Body>) -> bool + Clone + Send + Sync + 'static,
 {
-    move |req, next| {
+    move |router: Router<()>| {
         let guard_fn = guard_fn.clone();
-        Box::pin(async move {
-            if guard_fn(&req) {
-                next.run(req).await
-            } else {
-                axum::http::StatusCode::FORBIDDEN.into_response()
+        router.layer(axum::middleware::from_fn(move |req: Request<Body>, next: Next| {
+            let guard_fn = guard_fn.clone();
+            async move {
+                if guard_fn(&req) {
+                    next.run(req).await
+                } else {
+                    axum::http::StatusCode::FORBIDDEN.into_response()
+                }
             }
-        })
-            as std::pin::Pin<Box<dyn std::future::Future<Output = axum::response::Response> + Send>>
+        }))
     }
 }
 
@@ -149,4 +151,197 @@ fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
         diff |= ab ^ bb;
     }
     diff == 0
+}
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::{body::Body, http::Request, routing::get, Router};
+    use http_body_util::BodyExt;
+    use tower::ServiceExt;
+
+    // -----------------------------------------------------------------------
+    // constant_time_eq
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn ct_eq_identical_slices() {
+        assert!(constant_time_eq(b"secret", b"secret"));
+    }
+
+    #[test]
+    fn ct_eq_different_slices() {
+        assert!(!constant_time_eq(b"secret", b"wrong!"));
+    }
+
+    #[test]
+    fn ct_eq_empty_slices() {
+        assert!(constant_time_eq(b"", b""));
+    }
+
+    #[test]
+    fn ct_eq_different_lengths_short_a() {
+        assert!(!constant_time_eq(b"abc", b"abcd"));
+    }
+
+    #[test]
+    fn ct_eq_different_lengths_short_b() {
+        assert!(!constant_time_eq(b"abcd", b"abc"));
+    }
+
+    #[test]
+    fn ct_eq_empty_vs_nonempty() {
+        assert!(!constant_time_eq(b"", b"x"));
+    }
+
+    // -----------------------------------------------------------------------
+    // require_bearer
+    // -----------------------------------------------------------------------
+
+    fn bearer_router() -> Router<()> {
+        let inner = Router::new().route("/protected", get(|| async { "ok" }));
+        require_bearer("correct-token")(inner)
+    }
+
+    #[tokio::test]
+    async fn bearer_accepts_correct_token() {
+        let app = bearer_router();
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .uri("/protected")
+                    .header("Authorization", "Bearer correct-token")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), 200);
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        assert_eq!(&body[..], b"ok");
+    }
+
+    #[tokio::test]
+    async fn bearer_rejects_wrong_token() {
+        let app = bearer_router();
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .uri("/protected")
+                    .header("Authorization", "Bearer wrong-token")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), 401);
+    }
+
+    #[tokio::test]
+    async fn bearer_rejects_missing_header() {
+        let app = bearer_router();
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .uri("/protected")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), 401);
+    }
+
+    #[tokio::test]
+    async fn bearer_rejects_malformed_header() {
+        let app = bearer_router();
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .uri("/protected")
+                    .header("Authorization", "correct-token")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), 401);
+    }
+
+    // -----------------------------------------------------------------------
+    // guard
+    // -----------------------------------------------------------------------
+
+    fn guard_router(predicate: impl Fn(&Request<Body>) -> bool + Clone + Send + Sync + 'static) -> Router<()> {
+        let inner = Router::new().route("/guarded", get(|| async { "ok" }));
+        guard(predicate)(inner)
+    }
+
+    #[tokio::test]
+    async fn guard_allows_request_when_predicate_is_true() {
+        let app = guard_router(|_req| true);
+        let response = app
+            .oneshot(Request::builder().uri("/guarded").body(Body::empty()).unwrap())
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), 200);
+    }
+
+    #[tokio::test]
+    async fn guard_blocks_request_with_403_when_predicate_is_false() {
+        let app = guard_router(|_req| false);
+        let response = app
+            .oneshot(Request::builder().uri("/guarded").body(Body::empty()).unwrap())
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), 403);
+    }
+
+    #[tokio::test]
+    async fn guard_predicate_receives_live_request_headers() {
+        let app = guard_router(|req| req.headers().contains_key("x-allowed"));
+
+        // without header → 403
+        let blocked = app
+            .clone()
+            .oneshot(Request::builder().uri("/guarded").body(Body::empty()).unwrap())
+            .await
+            .unwrap();
+        assert_eq!(blocked.status(), 403);
+
+        // with header → 200
+        let allowed = app
+            .oneshot(
+                Request::builder()
+                    .uri("/guarded")
+                    .header("x-allowed", "yes")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(allowed.status(), 200);
+    }
+
+    #[tokio::test]
+    async fn guard_predicate_receives_live_request_uri() {
+        // predicate inspects the URI path
+        let app = guard_router(|req| req.uri().path().starts_with("/guarded"));
+
+        let response = app
+            .oneshot(Request::builder().uri("/guarded").body(Body::empty()).unwrap())
+            .await
+            .unwrap();
+        assert_eq!(response.status(), 200);
+    }
 }

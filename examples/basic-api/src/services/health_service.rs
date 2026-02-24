@@ -27,3 +27,23 @@ impl HealthService {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn health_check_returns_healthy_status() {
+        let svc = HealthService::new();
+        let resp = svc.health_check();
+        assert_eq!(resp.status, "healthy");
+    }
+
+    #[test]
+    fn health_check_is_idempotent() {
+        let svc = HealthService::new();
+        let first = svc.health_check();
+        let second = svc.health_check();
+        assert_eq!(first.status, second.status);
+    }
+}
