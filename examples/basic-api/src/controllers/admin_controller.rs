@@ -22,9 +22,7 @@ use crate::services::admin_service::{AdminService, AdminStatusResponse};
 /// Mounted under the /admin group in the pipeline, so the full path is /admin/status.
 /// Auth is applied by require_bearer on the /admin group — no token logic here.
 #[get("/status")]
-pub async fn admin_status(
-    State(svc): State<Arc<AdminService>>,
-) -> Json<AdminStatusResponse> {
+pub async fn admin_status(State(svc): State<Arc<AdminService>>) -> Json<AdminStatusResponse> {
     Json(svc.status())
 }
 
@@ -35,6 +33,8 @@ pub async fn admin_status(
 /// Controller marker for admin routes.
 pub struct AdminController;
 
-mount_handlers!(AdminController, AdminService, [
-    (__admin_status_route, admin_status),
-]);
+mount_handlers!(
+    AdminController,
+    AdminService,
+    [(__admin_status_route, admin_status),]
+);

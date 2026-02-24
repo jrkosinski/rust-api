@@ -120,16 +120,18 @@ where
 {
     move |router: Router<()>| {
         let guard_fn = guard_fn.clone();
-        router.layer(axum::middleware::from_fn(move |req: Request<Body>, next: Next| {
-            let guard_fn = guard_fn.clone();
-            async move {
-                if guard_fn(&req) {
-                    next.run(req).await
-                } else {
-                    axum::http::StatusCode::FORBIDDEN.into_response()
+        router.layer(axum::middleware::from_fn(
+            move |req: Request<Body>, next: Next| {
+                let guard_fn = guard_fn.clone();
+                async move {
+                    if guard_fn(&req) {
+                        next.run(req).await
+                    } else {
+                        axum::http::StatusCode::FORBIDDEN.into_response()
+                    }
                 }
-            }
-        }))
+            },
+        ))
     }
 }
 
@@ -280,7 +282,9 @@ mod tests {
     // guard
     // -----------------------------------------------------------------------
 
-    fn guard_router(predicate: impl Fn(&Request<Body>) -> bool + Clone + Send + Sync + 'static) -> Router<()> {
+    fn guard_router(
+        predicate: impl Fn(&Request<Body>) -> bool + Clone + Send + Sync + 'static,
+    ) -> Router<()> {
         let inner = Router::new().route("/guarded", get(|| async { "ok" }));
         guard(predicate)(inner)
     }
@@ -289,7 +293,12 @@ mod tests {
     async fn guard_allows_request_when_predicate_is_true() {
         let app = guard_router(|_req| true);
         let response = app
-            .oneshot(Request::builder().uri("/guarded").body(Body::empty()).unwrap())
+            .oneshot(
+                Request::builder()
+                    .uri("/guarded")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
             .await
             .unwrap();
 
@@ -300,7 +309,12 @@ mod tests {
     async fn guard_blocks_request_with_403_when_predicate_is_false() {
         let app = guard_router(|_req| false);
         let response = app
-            .oneshot(Request::builder().uri("/guarded").body(Body::empty()).unwrap())
+            .oneshot(
+                Request::builder()
+                    .uri("/guarded")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
             .await
             .unwrap();
 
@@ -314,7 +328,12 @@ mod tests {
         // without header → 403
         let blocked = app
             .clone()
-            .oneshot(Request::builder().uri("/guarded").body(Body::empty()).unwrap())
+            .oneshot(
+                Request::builder()
+                    .uri("/guarded")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
             .await
             .unwrap();
         assert_eq!(blocked.status(), 403);
@@ -339,7 +358,12 @@ mod tests {
         let app = guard_router(|req| req.uri().path().starts_with("/guarded"));
 
         let response = app
-            .oneshot(Request::builder().uri("/guarded").body(Body::empty()).unwrap())
+            .oneshot(
+                Request::builder()
+                    .uri("/guarded")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
             .await
             .unwrap();
         assert_eq!(response.status(), 200);

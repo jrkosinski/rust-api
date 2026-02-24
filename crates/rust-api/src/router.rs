@@ -13,12 +13,12 @@ use axum::routing::{on, MethodFilter};
 /// framework's macro layer, not a user error.
 pub fn method_filter_from_str(method: &str) -> MethodFilter {
     match method {
-        "GET"    => MethodFilter::GET,
-        "POST"   => MethodFilter::POST,
-        "PUT"    => MethodFilter::PUT,
+        "GET" => MethodFilter::GET,
+        "POST" => MethodFilter::POST,
+        "PUT" => MethodFilter::PUT,
         "DELETE" => MethodFilter::DELETE,
-        "PATCH"  => MethodFilter::PATCH,
-        other    => panic!(
+        "PATCH" => MethodFilter::PATCH,
+        other => panic!(
             "Unknown HTTP method '{}' in route annotation. \
              Use #[get], #[post], #[put], #[delete], or #[patch].",
             other

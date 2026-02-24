@@ -5,15 +5,11 @@ mod controllers;
 mod services;
 
 use controllers::{
-    admin_controller::AdminController,
-    echo_controller::EchoController,
-    health_controller::HealthController,
-    metrics_controller::MetricsController,
+    admin_controller::AdminController, echo_controller::EchoController,
+    health_controller::HealthController, metrics_controller::MetricsController,
 };
 use services::{
-    admin_service::AdminService,
-    echo_service::EchoService,
-    health_service::HealthService,
+    admin_service::AdminService, echo_service::EchoService, health_service::HealthService,
     metrics_service::MetricsService,
 };
 
@@ -60,10 +56,10 @@ async fn main() {
     initialize_tracing();
 
     // Services are plain Arc<S> — no registry, no type-map.
-    let health_svc  = Arc::new(HealthService::new());
-    let echo_svc    = Arc::new(EchoService::new());
+    let health_svc = Arc::new(HealthService::new());
+    let echo_svc = Arc::new(EchoService::new());
     let metrics_svc = Arc::new(MetricsService::new());
-    let admin_svc   = Arc::new(AdminService::new());
+    let admin_svc = Arc::new(AdminService::new());
 
     // Read the bearer token once at startup.
     // unwrap_or_default so construction never panics — mount_guarded is the gate.

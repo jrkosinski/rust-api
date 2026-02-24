@@ -27,6 +27,4 @@ pub async fn echo(
 pub struct EchoController;
 
 // Generates `impl Controller for EchoController` with the Kleisli mount fn.
-mount_handlers!(EchoController, EchoService, [
-    (__echo_route, echo),
-]);
+mount_handlers!(EchoController, EchoService, [(__echo_route, echo),]);

@@ -310,16 +310,11 @@ mod tests {
     }
 
     async fn status(app: Router<()>, uri: &str) -> u16 {
-        app.oneshot(
-            Request::builder()
-                .uri(uri)
-                .body(Body::empty())
-                .unwrap(),
-        )
-        .await
-        .unwrap()
-        .status()
-        .as_u16()
+        app.oneshot(Request::builder().uri(uri).body(Body::empty()).unwrap())
+            .await
+            .unwrap()
+            .status()
+            .as_u16()
     }
 
     // -----------------------------------------------------------------------
@@ -334,7 +329,10 @@ mod tests {
             })
             .build();
 
-        assert!(result.is_err(), "build() should return Err when guard fails");
+        assert!(
+            result.is_err(),
+            "build() should return Err when guard fails"
+        );
     }
 
     #[tokio::test]
@@ -382,8 +380,16 @@ mod tests {
             .build()
             .expect("build should succeed");
 
-        assert_eq!(status(app.clone(), "/v1/ping").await, 200, "/v1/ping should be 200");
-        assert_eq!(status(app, "/ping").await, 404, "/ping without prefix should be 404");
+        assert_eq!(
+            status(app.clone(), "/v1/ping").await,
+            200,
+            "/v1/ping should be 200"
+        );
+        assert_eq!(
+            status(app, "/ping").await,
+            404,
+            "/ping without prefix should be 404"
+        );
     }
 
     // -----------------------------------------------------------------------
@@ -397,6 +403,9 @@ mod tests {
             .mount::<PingController>(ping_state()) // should never run
             .build();
 
-        assert!(result.is_err(), "error should propagate through the rest of the pipeline");
+        assert!(
+            result.is_err(),
+            "error should propagate through the rest of the pipeline"
+        );
     }
 }

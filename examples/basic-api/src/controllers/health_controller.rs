@@ -19,6 +19,8 @@ pub struct HealthController;
 
 // Generates `impl Controller for HealthController` with the Kleisli mount fn.
 // Controllers know about: their service type, their handlers, and nothing else.
-mount_handlers!(HealthController, HealthService, [
-    (__health_check_route, health_check),
-]);
+mount_handlers!(
+    HealthController,
+    HealthService,
+    [(__health_check_route, health_check),]
+);

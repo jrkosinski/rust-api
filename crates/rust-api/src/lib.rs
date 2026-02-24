@@ -183,42 +183,42 @@ pub mod prelude {
     pub use crate::mount_handlers;
 
     pub use super::{
-        // Core types
-        Arc,
-        // Router
-        ApiRoute,
-        App,
-        // Middleware
-        CorsLayer,
-        // Controller trait — visible for doc purposes; mount_handlers! generates impls.
-        Controller,
-        Deserialize,
-        Error,
         // Macros
         delete,
         get,
         guard,
-        require_bearer,
-        // Axum — all surface types needed to write handlers and custom extractors.
-        // Clients must never add `axum` as a direct dependency.
-        FromRequestParts,
         header,
-        IntoResponse,
-        Json,
-        Parts,
         patch,
         post,
         put,
+        require_bearer,
         router,
-        // Pipeline
-        RouterPipeline,
-        RouterTransform,
+        // Router
+        ApiRoute,
+        App,
+        // Core types
+        Arc,
+        // Controller trait — visible for doc purposes; mount_handlers! generates impls.
+        Controller,
+        // Middleware
+        CorsLayer,
+        Deserialize,
+        Error,
+        // Axum — all surface types needed to write handlers and custom extractors.
+        // Clients must never add `axum` as a direct dependency.
+        FromRequestParts,
+        IntoResponse,
+        Json,
+        Parts,
         Path,
         Query,
         Response,
         Result,
         Router,
         RouterExt,
+        // Pipeline
+        RouterPipeline,
+        RouterTransform,
         RustAPI,
         // Serde
         Serialize,

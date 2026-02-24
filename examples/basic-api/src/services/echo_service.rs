@@ -70,7 +70,10 @@ mod tests {
     fn echo_data_format_includes_count_prefix() {
         let svc = EchoService::new();
         let resp = svc.echo("world");
-        assert!(resp.data.starts_with("1: "), "data should start with '<count>: '");
+        assert!(
+            resp.data.starts_with("1: "),
+            "data should start with '<count>: '"
+        );
         assert!(resp.data.ends_with("world"));
     }
 

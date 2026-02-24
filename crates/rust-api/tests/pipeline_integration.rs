@@ -4,9 +4,9 @@
 //! request using `tower::ServiceExt::oneshot`, and asserts on status + body.
 //! No TCP server is started — requests are processed entirely in-process.
 
-use rust_api::prelude::*;
 use axum::{body::Body, http::Request};
 use http_body_util::BodyExt;
+use rust_api::prelude::*;
 use tower::ServiceExt;
 
 // ---------------------------------------------------------------------------
@@ -45,7 +45,11 @@ pub async fn ping_handler(State(svc): State<Arc<PingService>>) -> &'static str {
 }
 
 pub struct PingController;
-mount_handlers!(PingController, PingService, [(__ping_handler_route, ping_handler)]);
+mount_handlers!(
+    PingController,
+    PingService,
+    [(__ping_handler_route, ping_handler)]
+);
 
 #[derive(Serialize, Deserialize)]
 pub struct GreetRequest {
@@ -61,7 +65,11 @@ pub async fn greet_handler(
 }
 
 pub struct MessageController;
-mount_handlers!(MessageController, MessageService, [(__greet_handler_route, greet_handler)]);
+mount_handlers!(
+    MessageController,
+    MessageService,
+    [(__greet_handler_route, greet_handler)]
+);
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -144,7 +152,11 @@ async fn get_on_post_only_route_returns_405() {
         .await
         .unwrap();
 
-    assert_eq!(resp.status().as_u16(), 405, "GET on a POST-only route should return 405");
+    assert_eq!(
+        resp.status().as_u16(),
+        405,
+        "GET on a POST-only route should return 405"
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -210,7 +222,10 @@ async fn mount_if_false_route_returns_404() {
         .unwrap();
 
     let (status, _) = get_request(app, "/ping").await;
-    assert_eq!(status, 404, "route should not be registered when mount_if condition is false");
+    assert_eq!(
+        status, 404,
+        "route should not be registered when mount_if condition is false"
+    );
 }
 
 #[tokio::test]
@@ -257,7 +272,9 @@ async fn mount_guarded_passing_guard_registers_route() {
 #[tokio::test]
 async fn group_prefix_applied_to_nested_routes() {
     let app = RouterPipeline::new()
-        .group("/api/v1", |g| g.mount::<PingController>(Arc::new(PingService::new())))
+        .group("/api/v1", |g| {
+            g.mount::<PingController>(Arc::new(PingService::new()))
+        })
         .build()
         .unwrap();
 
@@ -296,7 +313,11 @@ async fn group_auth_scoped_to_group_only() {
         )
         .await
         .unwrap();
-    assert_eq!(admin_no_token.status().as_u16(), 401, "admin route should require auth");
+    assert_eq!(
+        admin_no_token.status().as_u16(),
+        401,
+        "admin route should require auth"
+    );
 
     // Admin route accessible with correct token
     let admin_with_token = app
@@ -311,5 +332,9 @@ async fn group_auth_scoped_to_group_only() {
         )
         .await
         .unwrap();
-    assert_eq!(admin_with_token.status().as_u16(), 200, "admin route should succeed with correct token");
+    assert_eq!(
+        admin_with_token.status().as_u16(),
+        200,
+        "admin route should succeed with correct token"
+    );
 }

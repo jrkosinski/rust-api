@@ -66,4 +66,3 @@ pub trait Controller: Sized + 'static {
     ///   3. Merges into the outer `router` and returns `Ok(merged)`.
     fn mount(state: Arc<Self::State>) -> impl FnOnce(Router<()>) -> Result<Router<()>>;
 }
-
