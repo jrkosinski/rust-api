@@ -7,7 +7,8 @@
 //! # Module Boundaries
 //!
 //! - `pipeline.rs` — build-time: compose routes into a `Router`
-//! - `controller.rs` — build-time: declare which handlers belong to a controller
+//! - `controller.rs` — build-time: declare which handlers belong to a
+//!   controller
 //! - `middleware.rs` — request-time: inspect/modify requests and responses
 //!
 //! # Protected Route Groups
@@ -161,10 +162,11 @@ fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use axum::{body::Body, http::Request, routing::get, Router};
     use http_body_util::BodyExt;
     use tower::ServiceExt;
+
+    use super::*;
 
     // -----------------------------------------------------------------------
     // constant_time_eq

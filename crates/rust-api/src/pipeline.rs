@@ -1,4 +1,5 @@
-//! Monadic router pipeline for composable, error-propagating route registration.
+//! Monadic router pipeline for composable, error-propagating route
+//! registration.
 //!
 //! [`RouterPipeline`] wraps `Result<Router<()>>` and provides a fluent builder
 //! API where every step is `Result::and_then` (`>>=`). A failed step
@@ -76,7 +77,8 @@ impl RouterPipeline {
     // Core operations
     // -----------------------------------------------------------------------
 
-    /// Kleisli bind: thread the router through a [`Controller`]'s Kleisli arrow.
+    /// Kleisli bind: thread the router through a [`Controller`]'s Kleisli
+    /// arrow.
     ///
     /// Calls `C::mount(state)` to obtain the arrow, then threads it via
     /// `and_then`. The controller's routes are merged into the pipeline's
@@ -101,7 +103,8 @@ impl RouterPipeline {
         Self(self.0.map(f))
     }
 
-    /// Monad bind (`>>=`): apply a fallible `Router -> Result<Router>` transform.
+    /// Monad bind (`>>=`): apply a fallible `Router -> Result<Router>`
+    /// transform.
     ///
     /// Short-circuits on any previous error. Use for transforms that can fail.
     pub fn and_then<F>(self, f: F) -> Self
@@ -141,11 +144,12 @@ impl RouterPipeline {
     // Conditional and guarded mounting
     // -----------------------------------------------------------------------
 
-    /// Conditional mount: mount a [`Controller`] only when `condition` is `true`.
+    /// Conditional mount: mount a [`Controller`] only when `condition` is
+    /// `true`.
     ///
     /// When `false`, the pipeline passes through unchanged — no error produced.
-    /// The `state` value is moved into the mount call when `condition` is `true`,
-    /// or dropped when `false`.
+    /// The `state` value is moved into the mount call when `condition` is
+    /// `true`, or dropped when `false`.
     ///
     /// ```ignore
     /// RouterPipeline::new()
@@ -163,7 +167,8 @@ impl RouterPipeline {
         }
     }
 
-    /// Guarded mount: mount a [`Controller`] only when `guard()` returns `Ok(())`.
+    /// Guarded mount: mount a [`Controller`] only when `guard()` returns
+    /// `Ok(())`.
     ///
     /// The guard is a fallible predicate evaluated before the controller's
     /// Kleisli arrow runs. A guard error short-circuits the pipeline the same
@@ -221,9 +226,10 @@ impl RouterPipeline {
     /// Apply a dynamic collection of infallible `Router -> Router` transforms,
     /// left-to-right (fold over `map`).
     ///
-    /// Each item is a [`RouterTransform`] (`Box<dyn FnOnce(Router<()>) -> Router<()>>`)
-    /// so heterogeneous transforms (different layer types) can coexist in one
-    /// collection. For a small, static set of layers, chaining `.map()` is cleaner.
+    /// Each item is a [`RouterTransform`] (`Box<dyn FnOnce(Router<()>) ->
+    /// Router<()>>`) so heterogeneous transforms (different layer types)
+    /// can coexist in one collection. For a small, static set of layers,
+    /// chaining `.map()` is cleaner.
     ///
     /// ```ignore
     /// let transforms: Vec<RouterTransform> = vec![
@@ -282,10 +288,11 @@ impl Default for RouterPipeline {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::{controller::Controller, error::Result, router::Router};
     use axum::{body::Body, http::Request, routing::get};
     use tower::ServiceExt;
+
+    use super::*;
+    use crate::{controller::Controller, error::Result, router::Router};
 
     // -----------------------------------------------------------------------
     // Minimal test controller — state is `()`, handler returns a static string.

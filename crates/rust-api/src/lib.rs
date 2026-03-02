@@ -6,11 +6,11 @@
 //!
 //! # Features
 //!
-//! - **Route Macros**: Define endpoints with `#[get]`, `#[post]`, etc.
-//!   The HTTP verb from the annotation is a binding contract — enforced at
-//!   registration time via the `mount_handlers!` macro.
-//! - **Kleisli Pipeline**: `RouterPipeline` composes `Controller` Kleisli arrows
-//!   with `and_then` (`>>=`), short-circuiting on any error.
+//! - **Route Macros**: Define endpoints with `#[get]`, `#[post]`, etc. The HTTP
+//!   verb from the annotation is a binding contract — enforced at registration
+//!   time via the `mount_handlers!` macro.
+//! - **Kleisli Pipeline**: `RouterPipeline` composes `Controller` Kleisli
+//!   arrows with `and_then` (`>>=`), short-circuiting on any error.
 //! - **Direct DI**: Pass `Arc<Service>` directly to `pipeline.mount::<C>(svc)`.
 //!   No type-map registry required for the primary use case.
 //! - **Type-Driven**: Leverage Rust's type system for validation and docs.
@@ -73,6 +73,8 @@ pub mod routing {
 // Clients should never need to add `axum` as a direct dependency — all
 // surface types required to write handlers, extractors, and middleware
 // are available through this crate.
+pub use std::sync::Arc;
+
 pub use axum::{
     extract::{FromRequestParts, Path, Query, State},
     http::{header, request::Parts, StatusCode},
@@ -83,13 +85,13 @@ pub use axum::{
 pub use rust_api_macros::{delete, get, patch, post, put};
 // Re-export serde for user convenience
 pub use serde::{Deserialize, Serialize};
-pub use std::sync::Arc;
 pub use tower_http::{cors::CorsLayer, trace::TraceLayer};
 
 /// Generate a [`Controller`] implementation for a type from a handler list.
 ///
-/// This macro produces the Kleisli arrow `Arc<State> -> (Router -> Result<Router>)`
-/// that the `RouterPipeline::mount` method threads through the pipeline.
+/// This macro produces the Kleisli arrow `Arc<State> -> (Router ->
+/// Result<Router>)` that the `RouterPipeline::mount` method threads through the
+/// pipeline.
 ///
 /// Controllers using this macro have **zero dependency on `Router`, `RouteSet`,
 /// or any DI container** in their source files.
@@ -179,9 +181,6 @@ macro_rules! mount_handlers {
 pub mod prelude {
     pub use tokio;
 
-    // Re-export the mount_handlers! macro so `use rust_api::prelude::*` brings it in.
-    pub use crate::mount_handlers;
-
     pub use super::{
         // Macros
         delete,
@@ -226,4 +225,6 @@ pub mod prelude {
         StatusCode,
         TraceLayer,
     };
+    // Re-export the mount_handlers! macro so `use rust_api::prelude::*` brings it in.
+    pub use crate::mount_handlers;
 }

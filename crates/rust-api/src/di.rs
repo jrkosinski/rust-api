@@ -11,8 +11,10 @@
 //! # When to Use
 //!
 //! - You have a plugin system that registers services dynamically
-//! - You want to swap implementations at runtime (e.g. test doubles via trait objects)
-//! - You have many services and prefer centralized registration over explicit wiring
+//! - You want to swap implementations at runtime (e.g. test doubles via trait
+//!   objects)
+//! - You have many services and prefer centralized registration over explicit
+//!   wiring
 //!
 //! # When NOT to Use
 //!

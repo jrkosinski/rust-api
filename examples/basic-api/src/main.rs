@@ -25,7 +25,8 @@ async fn root() -> &'static str {
 ///
 /// - `group`           — nest controllers under a versioned path prefix
 /// - `mount`           — unconditional Kleisli controller bind
-/// - `mount_if`        — optional bind; silently skipped when condition is false
+/// - `mount_if`        — optional bind; silently skipped when condition is
+///   false
 /// - `mount_guarded`   — startup refusal when required config is absent
 /// - `require_bearer`  — Tower auth transform scoped to a route group
 /// - `layer_all`       — fold a `Vec<RouterTransform>` over `map`
@@ -42,8 +43,8 @@ async fn root() -> &'static str {
 /// )
 /// ```
 ///
-/// - `mount_guarded` is a **build-time** check: if `ADMIN_API_KEY` is unset
-///   the pipeline short-circuits and the server refuses to start.
+/// - `mount_guarded` is a **build-time** check: if `ADMIN_API_KEY` is unset the
+///   pipeline short-circuits and the server refuses to start.
 ///
 /// - `require_bearer` is a **request-time** Tower layer. It is applied via
 ///   `.map()` inside the `/admin` group, so only routes in that group require

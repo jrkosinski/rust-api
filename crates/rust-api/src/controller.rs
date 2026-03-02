@@ -1,25 +1,27 @@
 //! Controller trait — pure descriptor for composable route groups.
 //!
 //! A `Controller` is a zero-knowledge marker type. It knows only two things:
-//!   1. `type State` — the service it needs (`Arc<State>` is resolved and passed in)
+//!   1. `type State` — the service it needs (`Arc<State>` is resolved and
+//!      passed in)
 //!   2. `fn mount` — a Kleisli arrow `Arc<State> -> (Router -> Result<Router>)`
 //!
-//! Controllers have **no dependency on `Router`, `RouteSet`, or any DI container**.
-//! The `mount_handlers!` macro generates the `mount` implementation from a
-//! simple list of `(route_constant, handler_fn)` pairs. Users only write handlers.
+//! Controllers have **no dependency on `Router`, `RouteSet`, or any DI
+//! container**. The `mount_handlers!` macro generates the `mount`
+//! implementation from a simple list of `(route_constant, handler_fn)` pairs.
+//! Users only write handlers.
 //!
 //! # Kleisli Composition
 //!
 //! `mount` returns `impl FnOnce(Router<()>) -> Result<Router<()>>` — a Kleisli
 //! arrow in the `Result` monad. The `RouterPipeline` composes these arrows with
-//! `and_then` (`>>=`), threading the router through each controller in sequence.
-//! A failed arrow short-circuits the rest.
+//! `and_then` (`>>=`), threading the router through each controller in
+//! sequence. A failed arrow short-circuits the rest.
 //!
 //! # Immutability Contract
 //!
 //! State is passed as `Arc<S>` — shared, immutable after construction. Services
-//! must not expose `&mut self` methods. All state mutation goes through `Atomic*`
-//! primitives or channels (never `Mutex<T>` on the service struct).
+//! must not expose `&mut self` methods. All state mutation goes through
+//! `Atomic*` primitives or channels (never `Mutex<T>` on the service struct).
 //!
 //! # Example
 //!
@@ -41,7 +43,8 @@ use std::sync::Arc;
 
 use crate::{error::Result, router::Router};
 
-/// A pure descriptor for a group of HTTP routes sharing a common service dependency.
+/// A pure descriptor for a group of HTTP routes sharing a common service
+/// dependency.
 ///
 /// Do not implement this trait manually. Use the [`mount_handlers!`] macro,
 /// which generates the correct Kleisli arrow from your handler list.
