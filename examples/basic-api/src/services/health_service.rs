@@ -6,11 +6,11 @@ pub struct HealthResponse {
     pub status: String,
 }
 
+/// Health service — immutable after construction.
+/// All methods take `&self`; no `Mutex` needed.
 pub struct HealthService {
-    // state here
+    // state fields here
 }
-
-impl Injectable for HealthService {}
 
 impl HealthService {
     pub fn new() -> Self {
@@ -25,5 +25,25 @@ impl HealthService {
         HealthResponse {
             status: "healthy".to_string(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn health_check_returns_healthy_status() {
+        let svc = HealthService::new();
+        let resp = svc.health_check();
+        assert_eq!(resp.status, "healthy");
+    }
+
+    #[test]
+    fn health_check_is_idempotent() {
+        let svc = HealthService::new();
+        let first = svc.health_check();
+        let second = svc.health_check();
+        assert_eq!(first.status, second.status);
     }
 }

@@ -1,0 +1,129 @@
+---
+alwaysApply: true
+---
+
+# rust-api Framework Design Rules
+
+This project is a Rust REST API framework wrapping Axum, similar in intent to NestJS (wrapping Express). These rules encode the invariants that keep the design clean. Violations should be called out and corrected.
+
+## Module Responsibilities
+
+| Module | Responsibility | Must NOT contain |
+|---|---|---|
+| [controller.rs](mdc:crates/rust-api/src/controller.rs) | `Controller` trait — pure route descriptor | Auth logic, middleware, routing infrastructure |
+| [middleware.rs](mdc:crates/rust-api/src/middleware.rs) | Request-time Tower layer factories | Route registration, controller logic |
+| [pipeline.rs](mdc:crates/rust-api/src/pipeline.rs) | Build-time Kleisli route composition | Business logic, per-request concerns |
+| [router.rs](mdc:crates/rust-api/src/router.rs) | `Router` re-export + verb enforcement helpers | Business logic |
+| [di.rs](mdc:crates/rust-api/src/di.rs) | Optional DI container (advanced use) | Primary app flow (prefer direct `Arc<S>`) |
+
+## Invariant 1: Controllers Are Pure
+
+A controller file contains **only**:
+- Handler functions (`async fn`, annotated with `#[get]`, `#[post]`, etc.)
+- The controller marker struct (`pub struct FooController;`)
+- `mount_handlers!(...)` macro call
+
+Controllers must **never** contain:
+- Auth logic or token validation
+- `FromRequestParts` implementations for security enforcement
+- Imports of `axum` directly (use `rust_api::prelude::*`)
+- Knowledge of `Router`, `RouteSet`, or any DI container
+
+```rust
+// CORRECT — pure controller
+#[get("/users")]
+pub async fn list_users(State(svc): State<Arc<UserService>>) -> Json<Vec<User>> {
+    Json(svc.list())
+}
+pub struct UserController;
+mount_handlers!(UserController, UserService, [(__list_users_route, list_users)]);
+
+// WRONG — auth leaking into controller
+pub async fn list_users(_auth: ApiToken, State(svc): ...) -> ... { ... }
+```
+
+## Invariant 2: Auth Is a Tower Layer on a Route Group
+
+Authentication/authorization is a **cross-cutting concern**. It belongs in `middleware.rs` as a `Router -> Router` transform applied via `.map()` in the pipeline — **never** as an extractor in a handler signature for security enforcement.
+
+```rust
+// CORRECT — auth applied as a layer to the route group
+RouterPipeline::new()
+    .mount_guarded::<AdminController, _>(admin_svc, || { /* config check */ })
+    .map(require_bearer(admin_key))   // layer applied after mount
+    .build()?
+
+// WRONG — auth baked into the handler
+async fn admin_status(_: AdminToken, State(svc): ...) -> ... { ... }
+```
+
+This mirrors NestJS Guards and Next.js middleware: auth is applied at the routing layer, not inside handler logic.
+
+## Invariant 3: No Direct `axum` Dependency in User Crates
+
+`axum` is an **implementation detail** of `rust-api`. Client crates (examples, user apps) must never add `axum` as a direct dependency. All surface types needed to write handlers, services, and middleware are re-exported from `rust_api::prelude::*`.
+
+```toml
+# CORRECT — Cargo.toml
+[dependencies]
+rust-api = { path = "../../crates/rust-api" }
+
+# WRONG — exposes implementation detail
+[dependencies]
+axum = "0.8"
+rust-api = { path = "../../crates/rust-api" }
+```
+
+If a type is missing from the prelude, add it to `crates/rust-api/src/lib.rs` — do not add `axum` to the user crate.
+
+## Invariant 4: `mount_guarded` vs `mount_if`
+
+| Method | Semantics | Server behaviour on failure |
+|---|---|---|
+| `mount_if(condition, svc)` | Optional feature toggle | Silently skips, server starts normally |
+| `mount_guarded(svc, guard)` | Hard requirement — guard must pass | Server **refuses to start** (`build()` returns `Err`) |
+
+Use `mount_guarded` when the feature is **required** (e.g., admin routes need a configured key to be safe). Use `mount_if` when the feature is **optional** (e.g., metrics endpoint toggled by env var).
+
+## Invariant 5: Services Hold Business Logic Only
+
+Services must **never** contain:
+- Auth tokens or API keys
+- `&mut self` methods (use `Atomic*` primitives or channels for mutable state)
+- `Mutex<T>` on the service struct itself
+- Any concept of HTTP (headers, status codes, requests)
+
+```rust
+// CORRECT — immutable service, atomic counter
+pub struct EchoService { count: AtomicU64 }
+impl EchoService { pub fn echo(&self, msg: &str) -> EchoResponse { ... } }
+
+// WRONG — service holds auth secret
+pub struct AdminService { pub(crate) api_key: String }
+```
+
+## Invariant 6: Primary DI Is `Arc<S>`, Not the Container
+
+The `Container` (in `di.rs`) is an **optional** advanced utility. The primary DI mechanism is direct `Arc<Service>` construction and passing to `pipeline.mount::<C>(svc)`. The `Container` is not in the prelude and should not appear in typical application code.
+
+```rust
+// CORRECT
+let svc = Arc::new(MyService::new());
+RouterPipeline::new().mount::<MyController>(svc).build()?
+
+// AVOID for simple cases
+let mut container = Container::new();
+container.register::<MyService>(...);
+```
+
+## Invariant 7: `require_bearer` Usage Pattern
+
+`require_bearer(token)` returns a `Fn(Router<()>) -> Router<()>` — pass it directly to `.map()`, not to `.layer()`:
+
+```rust
+// CORRECT
+.map(require_bearer(admin_key))
+
+// WRONG — require_bearer is already a Router->Router transform
+.map(|r| r.layer(require_bearer(admin_key)))
+```
