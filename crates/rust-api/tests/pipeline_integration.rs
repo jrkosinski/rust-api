@@ -24,6 +24,12 @@ impl PingService {
     }
 }
 
+impl Default for PingService {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 pub struct MessageService;
 
 impl MessageService {
@@ -32,6 +38,12 @@ impl MessageService {
     }
     pub fn greet(&self, name: &str) -> String {
         format!("hello, {name}")
+    }
+}
+
+impl Default for MessageService {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
