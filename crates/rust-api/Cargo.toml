@@ -13,7 +13,7 @@ categories = ["web-programming::http-server"]
 
 [dependencies]
 # Internal dependencies
-rust-api-macros = { path = "../rust-api-macros", version = "0.0.1" }
+rust-api-macros = { path = "../rust-api-macros", version = "0.0.2" }
 
 # Workspace dependencies
 tokio = { workspace = true }
