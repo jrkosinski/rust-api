@@ -10,12 +10,13 @@
 
 **Motivation**: to make it as easy as possible to spin up a quick REST API in Rust with minimal plumbing code. 
 
-FastAPI in Python, and NestJS in JS/TS, make it easy to spin up a REST API. There are plenty of good reasons in which you might need a REST API defined in Rust, providing access (perhaps internal) to code that is best done in Rust. What I want is a FastAPI-like experience in Rust. This crate attempts to give that, as much as possible. The class-first definition of FastAPI, the dependency-injection features of NestJS. It offers:
+FastAPI in Python, and NestJS in JS/TS, make it easy to spin up a REST API. There are plenty of good reasons in which you might need a REST API defined in Rust, providing access (perhaps internal) to code that is best done in Rust. What I want is a FastAPI-like experience in Rust. This crate attempts to give that, as much as possible. The class-first definition of FastAPI, the composable middleware of NestJS. It offers:
 
-- **Route Macros** - FastAPI-style endpoint definitions
-- **Dependency Injection** - Type-safe service container
-- **Performance** - Built on Axum + Tokio
-- **Type Safety** - Leverage Rust's type system
+- **Route Macros** - FastAPI-style endpoint definitions with enforced HTTP verbs
+- **Composable Pipeline** - Type-safe, monadic router composition (Kleisli arrows)
+- **Controller Pattern** - Clean separation of routes and business logic
+- **Performance** - Built on Axum + Tokio with zero runtime overhead
+- **Type Safety** - Compile-time route verification, no runtime panics
 - **Future: Auto OpenAPI** - Documentation that stays in sync (coming soon)
 
 **Status**: Active Development | Not yet production-ready
@@ -23,7 +24,7 @@ FastAPI in Python, and NestJS in JS/TS, make it easy to spin up a REST API. Ther
 ## Quick Start
 
 ```rust
-use rust-api::prelude::*;
+use rust_api::prelude::*;
 
 #[derive(Serialize, Deserialize)]
 struct User {
@@ -31,30 +32,57 @@ struct User {
     name: String,
 }
 
+// Service layer
+pub struct UserService;
+
+impl UserService {
+    pub fn new() -> Self {
+        Self
+    }
+
+    pub fn get_user(&self, id: &str) -> User {
+        User {
+            id: id.to_string(),
+            name: format!("User {}", id)
+        }
+    }
+}
+
+// Controller layer
+pub struct UserController;
+
 #[get("/")]
 async fn hello() -> &'static str {
     "Hello, rust-api!"
 }
 
 #[get("/users/{id}")]
-async fn get_user(Path(id): Path<String>) -> Json<User> {
-    Json(User {
-        id: id.clone(),
-        name: format!("User {}", id)
-    })
+async fn get_user(
+    Path(id): Path<String>,
+    State(svc): State<Arc<UserService>>
+) -> Json<User> {
+    Json(svc.get_user(&id))
 }
+
+mount_handlers!(UserController, UserService, [
+    (__get_user_route, get_user)
+]);
 
 #[tokio::main]
 async fn main() {
-    let app = Router::new()
-        .route(__hello_route, routing::get(hello))
-        .route(__get_user_route, routing::get(get_user));
+    let user_svc = Arc::new(UserService::new());
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000")
-        .await
+    let app = RouterPipeline::new()
+        .mount::<UserController>(user_svc)
+        .route(__hello_route, hello)
+        .build()
         .unwrap();
 
-    axum::serve(listener, app).await.unwrap();
+    RustAPI::new(app)
+        .port(3000)
+        .serve()
+        .await
+        .unwrap();
 }
 ```
 
@@ -62,10 +90,12 @@ async fn main() {
 
 ### ✅ Implemented
 
-- **Route Macros**: `#[get]`, `#[post]`, `#[put]`, `#[delete]`, `#[patch]`
-- **DI Container**: Type-safe service registration and resolution
+- **Route Macros**: `#[get]`, `#[post]`, `#[put]`, `#[delete]`, `#[patch]` with enforced HTTP verbs
+- **RouterPipeline**: Composable, type-safe route building with Kleisli arrows
+- **Controller Pattern**: Clean separation with `mount_handlers!` macro
+- **Conditional Mounting**: `mount_if` and `mount_guarded` for feature flags and validation
+- **Scoped Middleware**: Group-level auth and path prefixes
 - **Prelude Module**: One import for everything you need
-- **Examples**: Working hello_world and full-featured examples
 
 ### Coming Soon
 
@@ -77,24 +107,35 @@ async fn main() {
 
 ## Examples
 
-Run the examples to see the framework working:
+Run the working example to see the framework in action:
 
 ```bash
-# Minimal hello world
-cargo run --example hello_world
-
-# Full-featured example
-cargo run --example with_macros
-
-# Demo app with DI
-cargo run
+# Full-featured example with RouterPipeline, controllers, and middleware
+cargo run --package basic-api
 ```
 
 Then test the endpoints:
 
 ```bash
+# Root endpoint
 curl http://localhost:3000/
-curl http://localhost:3000/users/42
+
+# Health check
+curl http://localhost:3000/api/v1/health
+
+# Echo endpoint
+curl -X POST http://localhost:3000/api/v1/echo \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Hello RustAPI"}'
+
+# Metrics (requires ENABLE_METRICS env var)
+ENABLE_METRICS=1 cargo run --package basic-api
+curl http://localhost:3000/metrics
+
+# Admin endpoint (requires ADMIN_API_KEY env var)
+ADMIN_API_KEY=secret cargo run --package basic-api
+curl -X POST http://localhost:3000/admin/reset \
+  -H "Authorization: Bearer secret"
 ```
 
 ## Architecture
@@ -102,12 +143,10 @@ curl http://localhost:3000/users/42
 ```
 rust-api/
 ├── crates/
-│   ├── rust-api/           # Main crate (DI, app builder, server, router)
-│   └── rust-api-macros/    # Route macros (#[get], etc.)
+│   ├── rust-api/           # Main crate (RouterPipeline, Controller trait, middleware)
+│   └── rust-api-macros/    # Route macros (#[get], #[post], etc.)
 ├── examples/
-│   ├── hello_world.rs     # Minimal example
-│   ├── with_macros.rs     # Full-featured example
-│   └── basic-api/         # Complete app with controllers and services
+│   └── basic-api/         # Complete app demonstrating RouterPipeline with controllers
 └── Cargo.toml             # Workspace configuration
 ```
 
@@ -123,7 +162,8 @@ rust-api/
 
 ## Documentation
 
-- [ARCHITECTURE.md](ARCHITECTURE.md) - Complete architectural vision
+- [ARCHITECTURE.md](docs/ARCHITECTURE.md) - Complete architectural vision
+- [CompositionalRefactor.md](docs/CompositionalRefactor.md) - Deep dive into the Kleisli Pipeline refactor
 - [PROGRESS.md](PROGRESS.md) - Development progress
 - [TODO.md](TODO.md) - Detailed roadmap
 - [examples/](examples/) - Working code examples
@@ -132,16 +172,19 @@ rust-api/
 
 **Phase 1: Core** ✅
 
-- [x] DI Container
-- [x] Route Macros
-- [x] Examples
+- [x] Route Macros with enforced HTTP verbs
+- [x] RouterPipeline with Kleisli composition
+- [x] Controller trait and mount_handlers! macro
+- [x] Conditional and guarded mounting
+- [x] Scoped middleware and route groups
+- [x] Working example (basic-api)
 
 **Phase 2: DX Improvements** (In Progress)
 
-- [ ] `Inject<T>` extractor
-- [ ] Better route registration
+- [x] Better route registration (RouterPipeline)
+- [x] Compile-time type safety (no runtime panics)
+- [ ] `Inject<T>` extractor (alternative to State)
 - [ ] Macro-generated app builder
-- [ ] Reflection-like definition without actual reflection: define a class that becomes the API
 
 **Phase 3: Validation** (Planned)
 

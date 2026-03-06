@@ -18,8 +18,10 @@ The server will start on `http://localhost:3000`.
 ## Available Endpoints
 
 - `GET /` - Welcome message
-- `GET /health` - Health check endpoint
-- `POST /echo` - Echo service that returns your message with a counter
+- `GET /api/v1/health` - Health check endpoint
+- `POST /api/v1/echo` - Echo service that returns your message with a counter
+- `GET /metrics` - Metrics endpoint (when ENABLE_METRICS is set)
+- `POST /admin/reset` - Admin endpoint (requires ADMIN_API_KEY)
 
 ## Testing
 
@@ -28,12 +30,21 @@ The server will start on `http://localhost:3000`.
 curl http://localhost:3000/
 
 # Health check
-curl http://localhost:3000/health
+curl http://localhost:3000/api/v1/health
 
 # Echo endpoint
-curl -X POST -H "Content-Type: application/json" \
-  -d '{"message":"Hello RustAPI"}' \
-  http://localhost:3000/echo
+curl -X POST http://localhost:3000/api/v1/echo \
+  -H "Content-Type: application/json" \
+  -d '{"message":"Hello RustAPI"}'
+
+# Metrics (requires ENABLE_METRICS env var)
+ENABLE_METRICS=1 cargo run --package basic-api
+curl http://localhost:3000/metrics
+
+# Admin endpoint (requires ADMIN_API_KEY env var)
+ADMIN_API_KEY=secret cargo run --package basic-api
+curl -X POST http://localhost:3000/admin/reset \
+  -H "Authorization: Bearer secret"
 ```
 
 ## Project Structure
@@ -53,7 +64,9 @@ basic-api/
 
 ## Key Features Demonstrated
 
-1. **Dependency Injection**: Services are registered in a DI container and resolved at runtime
-2. **State Management**: Each router can have its own state (service instance)
-3. **Route Merging**: Separate routers are merged into a single application
-4. **Middleware Layers**: CORS and tracing are added as middleware layers
+1. **RouterPipeline Composition**: Services are passed directly as `Arc<Service>` to `mount::<Controller>()`
+2. **Kleisli Arrows**: Controllers are pure functions that compose via `and_then` (`>>=`)
+3. **Conditional Mounting**: `mount_if` and `mount_guarded` for feature flags and startup validation
+4. **Scoped Middleware**: `group()` with path prefixes and scoped auth layers
+5. **Verb Enforcement**: HTTP methods from `#[get]`/`#[post]` annotations are binding contracts
+6. **Zero Axum Imports**: User code only imports `rust_api::prelude::*`
